@@ -13,6 +13,7 @@ import (
 	"go-starter/internal/config"
 	"go-starter/internal/handler"
 	"go-starter/internal/infra"
+	"go-starter/internal/repository"
 	"go-starter/internal/router"
 	"go-starter/internal/service"
 )
@@ -38,11 +39,17 @@ func main() {
 	if err != nil {
 		log.Fatal("rabbitmq: ", err)
 	}
+	db := mongoClient.Database(cfg.MongoDB)
+
+	userRepo := repository.NewUserRepository(db)
 
 	healthSvc := service.NewHealthService(mongoClient, redisClient, rabbitConn)
-	healthHandler := handler.NewHealthHandler(healthSvc)
+	authSvc := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpiresIn)
 
-	srv := &http.Server{Addr: cfg.Addr, Handler: router.New(healthHandler)}
+	healthHandler := handler.NewHealthHandler(healthSvc)
+	authHandler := handler.NewAuthHandler(authSvc)
+
+	srv := &http.Server{Addr: cfg.Addr, Handler: router.New(healthHandler, authHandler)}
 
 	go func() {
 		log.Println("API jalan di", cfg.Addr)
