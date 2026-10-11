@@ -13,6 +13,7 @@ import (
 	"go-starter/internal/config"
 	"go-starter/internal/handler"
 	"go-starter/internal/infra"
+	"go-starter/internal/middleware"
 	"go-starter/internal/repository"
 	"go-starter/internal/router"
 	"go-starter/internal/service"
@@ -42,14 +43,25 @@ func main() {
 	db := mongoClient.Database(cfg.MongoDB)
 
 	userRepo := repository.NewUserRepository(db)
+	roleRepo := repository.NewRoleRepository(db)
 
 	healthSvc := service.NewHealthService(mongoClient, redisClient, rabbitConn)
 	authSvc := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpiresIn)
+	roleSvc := service.NewRoleService(roleRepo)
 
 	healthHandler := handler.NewHealthHandler(healthSvc)
 	authHandler := handler.NewAuthHandler(authSvc)
+	roleHandler := handler.NewRoleHandler(roleSvc)
 
-	srv := &http.Server{Addr: cfg.Addr, Handler: router.New(healthHandler, authHandler)}
+	routes := router.New(router.Deps{
+		Health:          healthHandler,
+		Auth:            authHandler,
+		Role:            roleHandler,
+		AuthMW:          middleware.Auth(cfg.JWTSecret, roleRepo),
+		RoleOwnershipMW: middleware.Ownership("id", roleSvc.CheckAccess),
+	})
+
+	srv := &http.Server{Addr: cfg.Addr, Handler: routes}
 
 	go func() {
 		log.Println("API jalan di", cfg.Addr)
