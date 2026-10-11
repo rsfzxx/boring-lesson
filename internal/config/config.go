@@ -1,11 +1,14 @@
-// Package config membaca konfigurasi aplikasi dari environment variable.
 package config
 
-import "os"
+import (
+	"log"
+	"os"
+)
 
 type Config struct {
 	Addr      string
 	MongoURI  string
+	MongoDB   string
 	RedisAddr string
 	AMQPURL   string
 }
@@ -13,10 +16,19 @@ type Config struct {
 func Load() Config {
 	return Config{
 		Addr:      env("ADDR", ":8080"),
-		MongoURI:  env("MONGO_URI", "mongodb://localhost:27017"),
-		RedisAddr: env("REDIS_ADDR", "localhost:6379"),
-		AMQPURL:   env("AMQP_URL", "amqp://guest:guest@localhost:5672/"),
+		MongoURI:  mustEnv("MONGO_URI"),
+		MongoDB:   mustEnv("MONGO_DB"),
+		RedisAddr: mustEnv("REDIS_ADDR"),
+		AMQPURL:   mustEnv("AMQP_URL"),
 	}
+}
+
+func mustEnv(key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		log.Fatalf("environment variable %s wajib diisi (lihat .env.example)", key)
+	}
+	return v
 }
 
 func env(key, fallback string) string {
