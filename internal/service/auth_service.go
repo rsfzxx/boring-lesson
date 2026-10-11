@@ -62,13 +62,5 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 		AccessToken: token,
 		TokenType:   "Bearer",
 		ExpiresIn:   int(s.jwtTTL.Seconds()),
-		User: dto.UserResponse{
-			ID:          user.ID.Hex(),
-			Name:        user.Name,
-			Email:       user.Email,
-			PhoneNumber: user.PhoneNumber,
-			RoleID:      user.RoleID.Hex(),
-			GroupID:     user.GroupID.Hex(),
-		},
 	}, nil
 }

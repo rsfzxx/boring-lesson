@@ -1,0 +1,13 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/src
+      - go_mod:/go/pkg/mod
+      - go_build:/root/.cache/go-build
+
+volumes:
+  go_mod:
+  go_build:
