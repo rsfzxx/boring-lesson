@@ -59,8 +59,8 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 	}
 
 	return &dto.LoginResponse{
+		Message:     "Login successful",
 		AccessToken: token,
-		TokenType:   "Bearer",
 		ExpiresIn:   int(s.jwtTTL.Seconds()),
 	}, nil
 }

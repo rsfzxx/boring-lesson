@@ -21,23 +21,25 @@ func NewAuthHandler(svc *service.AuthService) *AuthHandler {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, dto.ErrorResponse{Error: "body harus berupa JSON yang valid"})
+		writeError(w, http.StatusBadRequest, "body harus berupa JSON yang valid")
 		return
 	}
 	if req.PhoneNumber == "" || req.Password == "" {
-		writeJSON(w, http.StatusBadRequest, dto.ErrorResponse{Error: "phone_number dan password wajib diisi"})
+		writeError(w, http.StatusBadRequest, "phone_number dan password wajib diisi")
 		return
 	}
 
 	res, err := h.svc.Login(r.Context(), req)
 	if errors.Is(err, service.ErrInvalidCredentials) {
-		writeJSON(w, http.StatusUnauthorized, dto.ErrorResponse{Error: err.Error()})
+		writeError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	if err != nil {
 		log.Println("login:", err)
-		writeJSON(w, http.StatusInternalServerError, dto.ErrorResponse{Error: "terjadi kesalahan di server"})
+		writeError(w, http.StatusInternalServerError, "terjadi kesalahan di server")
 		return
 	}
-	writeJSON(w, http.StatusOK, res)
+
+	res.Status = http.StatusOK
+	writeJSON(w, res.Status, res)
 }

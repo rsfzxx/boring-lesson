@@ -6,9 +6,10 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	AccessToken string       `json:"access_token"`
-	TokenType   string       `json:"token_type"`
-	ExpiresIn   int          `json:"expires_in"`
+	Status      int    `json:"status"`
+	Message     string `json:"message"`
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
 }
 
 type UserResponse struct {
@@ -21,5 +22,6 @@ type UserResponse struct {
 }
 
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Status  int    `json:"status"`
+	Message string `json:"message"`
 }
