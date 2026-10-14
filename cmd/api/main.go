@@ -44,21 +44,26 @@ func main() {
 
 	userRepo := repository.NewUserRepository(db)
 	roleRepo := repository.NewRoleRepository(db)
+	groupRepo := repository.NewGroupRepository(db)
 
 	healthSvc := service.NewHealthService(mongoClient, redisClient, rabbitConn)
 	authSvc := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpiresIn)
 	roleSvc := service.NewRoleService(roleRepo)
+	userSvc := service.NewUserService(userRepo, roleRepo, groupRepo)
 
 	healthHandler := handler.NewHealthHandler(healthSvc)
 	authHandler := handler.NewAuthHandler(authSvc)
 	roleHandler := handler.NewRoleHandler(roleSvc)
+	userHandler := handler.NewUserHandler(userSvc)
 
 	routes := router.New(router.Deps{
 		Health:          healthHandler,
 		Auth:            authHandler,
 		Role:            roleHandler,
+		User:            userHandler,
 		AuthMW:          middleware.Auth(cfg.JWTSecret, roleRepo),
 		RoleOwnershipMW: middleware.Ownership("id", roleSvc.CheckAccess),
+		UserOwnershipMW: middleware.Ownership("id", userSvc.CheckAccess),
 	})
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: routes}
